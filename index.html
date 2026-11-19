@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mapa de la Corrupción</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Concepto: expediente de investigación. Barra lateral de archivo + mesa de trabajo con tarjetas, sellos en mono y un mapa de fichas por territorio. */
+:root{
+  --bg:#EEF1F6; --surface:#FFFFFF; --surface-2:#E4E9F2; --ink:#0D1A33; --muted:#505C75; --line:#CFD6E3;
+  --blue:#1A4BA0; --on-blue:#FFFFFF; --gold:#E3A400; --on-gold:#1A1300; --red:#B8352A; --green:#22724A;
+  --c2:#5B6B8C; --c3:#2E8B7A; --c4:#8E5BB5; --c5:#C2603A; --c6:#7B8794;
+  --fd:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --fb:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --fm:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1120; --surface:#121B30; --surface-2:#1B2744; --ink:#E7ECF6; --muted:#97A3BE; --line:#27345A;
+    --blue:#7FA6FF; --on-blue:#0A1120; --gold:#F5B800; --on-gold:#1A1300; --red:#FF8577; --green:#5FCB93;
+    --c2:#8FA0C4; --c3:#4FC2AC; --c4:#BF95E0; --c5:#F08E63; --c6:#A5B0BF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1120; --surface:#121B30; --surface-2:#1B2744; --ink:#E7ECF6; --muted:#97A3BE; --line:#27345A;
+  --blue:#7FA6FF; --on-blue:#0A1120; --gold:#F5B800; --on-gold:#1A1300; --red:#FF8577; --green:#5FCB93;
+  --c2:#8FA0C4; --c3:#4FC2AC; --c4:#BF95E0; --c5:#F08E63; --c6:#A5B0BF; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--fb);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+a{color:var(--blue)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+h1,h2,h3{font-family:var(--fd);margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+.mono{font-family:var(--fm)}
+.kicker{font:500 .72rem var(--fm);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);gap:36px;max-width:1220px;margin:0 auto}
+.side{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow:auto;padding:24px 0;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.brand b{display:block;font:800 1.3rem/1.05 var(--fd);letter-spacing:-.02em}
+.brand-sub{margin-top:4px}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font:500 .72rem var(--fm);white-space:nowrap}
+.search input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:block;padding:8px 10px;border-radius:7px;text-decoration:none;color:var(--ink);font-weight:500;border-left:3px solid transparent}
+.nav a:hover{background:var(--surface-2)}
+.nav a[aria-current="page"]{background:var(--surface);border-left-color:var(--gold);font-weight:600}
+.main{padding:30px 0 72px;min-width:0}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr);gap:0}
+  .side{top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding:10px 0;gap:8px;border-bottom:1px solid var(--line);max-height:none;overflow:visible}
+  .brand-sub{display:none}
+  .brand b{font-size:1.1rem}
+  .nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:2px}
+  .nav a{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;border-radius:6px 6px 0 0;padding:7px 10px}
+  .nav a[aria-current="page"]{border-bottom-color:var(--gold)}
+  .main{padding-top:20px}
+}
+
+.vh{display:flex;flex-direction:column;gap:10px;margin-bottom:22px;max-width:70ch}
+.vh h2{font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.05;font-weight:800}
+.lede{color:var(--muted);font-size:1.02rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.grid{display:grid;gap:14px}
+.stamp{display:inline-block;font:500 .66rem var(--fm);letter-spacing:.08em;text-transform:uppercase;padding:.2rem .5rem;border:1.5px solid currentColor;border-radius:3px;transform:rotate(-1.5deg);white-space:nowrap}
+.s-condena{color:var(--red)} .s-proceso{color:var(--blue)}
+.s-curso{background:var(--gold);color:var(--on-gold);border-color:transparent}
+.tag{font:500 .68rem var(--fm);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:.12rem .55rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.85rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:8px;padding:9px 16px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn[disabled]{opacity:.4;cursor:default}
+.note{font-size:.82rem;color:var(--muted)}
+
+/* Inicio */
+.hero h1{font-size:clamp(2.3rem,6.5vw,4.6rem);line-height:.98;font-weight:800;letter-spacing:-.03em;max-width:14ch}
+.hero .lede{max-width:58ch;margin-top:16px;font-size:1.1rem}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px 28px;margin:26px 0}
+.stat b{display:block;font:800 2rem/1 var(--fd);font-variant-numeric:tabular-nums}
+.stat span{font:500 .7rem var(--fm);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.entry{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.entry a{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.entry a:hover{border-color:var(--ink)}
+.entry strong{font:800 1.12rem/1.15 var(--fd)}
+.entry span{color:var(--muted);font-size:.9rem}
+.rules{margin-top:20px;border:2px dashed var(--line);border-radius:10px;padding:18px}
+.rules ul{margin:10px 0 0;padding-left:1.1rem;display:grid;gap:4px}
+
+/* Mapa */
+.mapwrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.mapwrap{grid-template-columns:minmax(0,1fr)}}
+.maptools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px}
+.maptools select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.tilemap{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px}
+.tile{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;border:1px solid var(--line);border-radius:6px;
+  background:color-mix(in srgb,var(--blue) calc(var(--p)*1%),var(--surface-2));color:var(--ink);min-width:0}
+.tile b{font:600 clamp(.58rem,1.6vw,.78rem) var(--fm)}
+.tile i{font:500 clamp(.52rem,1.3vw,.66rem) var(--fm);font-style:normal;opacity:.8}
+.tile[aria-pressed="true"]{outline:3px solid var(--gold);outline-offset:1px;z-index:1}
+.legend{display:flex;align-items:center;gap:8px;margin-top:12px;font:500 .7rem var(--fm);color:var(--muted)}
+.legend span.bar{flex:0 0 120px;height:10px;border-radius:5px;border:1px solid var(--line);background:linear-gradient(90deg,var(--surface-2),color-mix(in srgb,var(--blue) 55%,var(--surface-2)))}
+.dp h3{font-size:1.6rem;font-weight:800;line-height:1.05}
+.dp .chips{margin:10px 0 14px}
+.casebtn{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;width:100%;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:8px}
+.casebtn:hover{border-color:var(--ink)}
+.casebtn small{font:500 .7rem var(--fm);color:var(--muted)}
+
+/* Escándalos */
+.tl{margin:18px 0 0 6px;border-left:2px solid var(--line);padding-left:18px;display:grid;gap:12px}
+.case{background:var(--surface);border:1px solid var(--line);border-radius:10px;position:relative}
+.case::before{content:"";position:absolute;left:-26px;top:22px;width:12px;height:12px;border-radius:50%;background:var(--gold);border:2px solid var(--bg)}
+.case summary{list-style:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;cursor:pointer}
+.case summary::-webkit-details-marker{display:none}
+.yr{font:600 1.15rem var(--fm);font-variant-numeric:tabular-nums}
+.ct{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ct strong{font:800 1.12rem/1.15 var(--fd)}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.cbody{padding:4px 16px 18px;display:grid;gap:12px;border-top:1px solid var(--line)}
+.cbody dl{margin:0;display:grid;gap:10px}
+.cbody dt{font:500 .68rem var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.cbody dd{margin:2px 0 0;max-width:70ch}
+@media (max-width:560px){.case summary{grid-template-columns:minmax(0,1fr);gap:8px}.case::before{top:20px}}
+
+/* Mecanismos */
+.mgrid{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.mgrid{grid-template-columns:minmax(0,1fr)}}
+.mlist{display:flex;flex-direction:column;gap:6px}
+@media (max-width:860px){.mlist{flex-direction:row;flex-wrap:wrap}}
+.mbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 12px;text-align:left;font-weight:500}
+.mbtn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.step{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--bg)}
+.step .n{font:600 .72rem var(--fm);color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.step p{margin-top:6px;font-size:1.05rem;max-width:62ch}
+.dots{display:flex;gap:6px;margin-top:14px}
+.dot{width:26px;height:6px;border-radius:3px;border:0;background:var(--line);padding:0}
+.dot.on{background:var(--gold)}
+.stepnav{display:flex;gap:8px;margin-top:14px}
+.flags{margin:8px 0 0;padding-left:1.1rem;display:grid;gap:4px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px}
+.sub{font:500 .7rem var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* Calculadora */
+.calc{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.calc{grid-template-columns:minmax(0,1fr)}}
+.field{display:grid;gap:4px;margin-top:12px}
+.field label{font:500 .72rem var(--fm);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.field input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:500 1rem var(--fm);font-variant-numeric:tabular-nums}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.res b{display:block;font:800 clamp(1.8rem,4vw,2.5rem)/1 var(--fd);font-variant-numeric:tabular-nums}
+.res span{display:block;margin-top:6px;font-weight:600}
+.res small{display:block;margin-top:2px;color:var(--muted);font-size:.8rem}
+.big{font:800 1.8rem/1.1 var(--fd)}
+
+/* Mundo */
+.chartbox{overflow-x:auto}
+.chartbox svg{width:100%;min-width:480px;height:auto;display:block}
+.ax{stroke:var(--line);stroke-width:1}
+.tx{fill:var(--muted);font:11px var(--fm)}
+.ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.ln.co{stroke-width:4}
+.yearline{stroke:var(--gold);stroke-width:2;stroke-dasharray:4 4}
+.row{display:grid;grid-template-columns:90px minmax(0,1fr) 36px;gap:10px;align-items:center;margin-top:8px;font-size:.9rem}
+.track{height:14px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.fill{height:100%;background:var(--c2);border-radius:4px}
+.fill.co{background:var(--blue)}
+.row b{font:600 .85rem var(--fm);text-align:right;font-variant-numeric:tabular-nums}
+.yr-ctl{display:flex;align-items:center;gap:14px;margin:6px 0 4px}
+.yr-ctl input{flex:1;min-width:0;accent-color:var(--blue)}
+.yr-ctl output{font:800 1.8rem var(--fd);min-width:3.2ch}
+.dotc{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+/* Detective */
+.exp{font:400 .95rem/1.6 var(--fm);background:var(--bg);border:1px dashed var(--ink);border-radius:8px;padding:16px;margin-top:12px}
+.opts{display:grid;gap:8px;margin-top:14px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:11px 14px}
+.opt:hover:not([disabled]){border-color:var(--ink)}
+.opt.ok{border-color:var(--green);background:color-mix(in srgb,var(--green) 16%,var(--surface))}
+.opt.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 16%,var(--surface))}
+.why{margin-top:12px;padding:12px 14px;border-radius:8px;background:var(--surface-2)}
+.prog{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.prog i{display:block;height:100%;background:var(--gold)}
+.resbox{font:500 .9rem/1.5 var(--fm);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px;user-select:all}
+
+/* Glosario / Qué hacer */
+.gl{display:grid;gap:8px;margin-top:14px}
+.gl details{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.gl summary{padding:11px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:600}
+.gl summary .tag{flex:none}
+.gl div{padding:0 14px 14px;max-width:70ch}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.cols ol,.cols ul{margin:8px 0 0;padding-left:1.15rem;display:grid;gap:6px}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.links a{border:1px solid var(--line);border-radius:8px;padding:7px 12px;text-decoration:none;font-weight:500;background:var(--surface)}
+.links a:hover{border-color:var(--ink)}
+.check{display:grid;gap:8px;margin-top:12px}
+.check label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer}
+.check input{margin-top:4px;accent-color:var(--blue);width:18px;height:18px;flex:none}
+.res-list{display:grid;gap:8px}
+.hit{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.hit:hover{border-color:var(--ink)}
+.hit p{color:var(--muted);font-size:.88rem;margin-top:4px}
+footer.foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:.82rem;color:var(--muted);max-width:75ch}
+.credits{margin-bottom:16px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:8px;color:var(--ink)}
+.team{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.team li{font:500 .85rem var(--fb);padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--bg)}
+@media (prefers-reduced-motion:no-preference){.view{animation:in .25s ease-out}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div><b>Mapa de la Corrupción</b><div class="kicker brand-sub">Colombia al descubierto</div></div>
+      <button class="icon-btn" id="theme" type="button" aria-label="Cambiar tema claro u oscuro">Tema</button>
+    </div>
+    <div class="search"><input id="q" type="search" placeholder="Buscar casos, términos, territorios" aria-label="Buscar en todo el sitio" autocomplete="off"></div>
+    <nav class="nav" id="nav" aria-label="Secciones"></nav>
+  </aside>
+
+  <main class="main">
+    <!-- INICIO -->
+    <section class="view" id="v-inicio">
+      <div class="hero">
+        <div class="kicker">Expediente abierto</div>
+        <h1>Cómo se roba lo público, y cómo se frena</h1>
+        <div class="credits" style="margin:18px 0 0;max-width:640px"><div class="kicker">Página creada por</div><ul class="team"><li>Nicolas Riveros Vergara</li><li>Yeison Buitrago Hurtado</li><li>Mario Andres Montoya</li><li>Juan Jose Restrepo</li><li>Juan Jose Pérez</li></ul></div>
+        <p class="lede">Un tablero para explorar la corrupción en Colombia: dónde han ocurrido los casos más conocidos, qué mecanismos usan, qué dice la ley y qué puedes hacer tú desde tu casa.</p>
+        <div class="hero-meta" id="stats"></div>
+      </div>
+      <div class="entry" id="entry"></div>
+      <div class="rules">
+        <div class="kicker">Reglas de este atlas</div>
+        <ul>
+          <li>Cada caso indica su estado judicial. Nadie es culpable sin sentencia en firme.</li>
+          <li>Las cifras son aproximadas y se deben confirmar en la fuente que se indica.</li>
+          <li>Los ejemplos de mecanismos y el juego de detective son ficticios.</li>
+          <li>Que un territorio no tenga casos aquí no significa que esté libre de corrupción. Este atlas solo incluye una selección.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- MAPA -->
+    <section class="view" id="v-mapa" hidden>
+      <div class="vh"><div class="kicker">Territorio</div><h2>Mapa de casos por departamento</h2>
+        <p class="lede">Cada ficha es un departamento (más Bogotá). El tono indica cuántos casos de este atlas tocan ese territorio. No es un índice de corrupción. Toca una ficha para ver el detalle.</p></div>
+      <div class="mapwrap">
+        <div>
+          <div class="maptools"><label for="mapType" class="kicker">Tipo de caso</label><select id="mapType"></select></div>
+          <div class="tilemap" id="tilemap" role="group" aria-label="Mapa de departamentos de Colombia"></div>
+          <div class="legend"><span>Sin casos</span><span class="bar"></span><span>Más casos</span></div>
+          <p class="note" style="margin-top:10px">Mapa esquemático: la posición de cada ficha aproxima la ubicación real, no el tamaño ni la forma del departamento.</p>
+        </div>
+        <div class="card dp" id="dpanel" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ESCÁNDALOS -->
+    <section class="view" id="v-escandalos" hidden>
+      <div class="vh"><div class="kicker">Línea de tiempo</div><h2>Grandes casos, de 2006 a hoy</h2>
+        <p class="lede">Abre cada caso para ver qué pasó, quiénes aparecen, cuánto dinero se menciona y cómo va el proceso. Filtra por tipo.</p></div>
+      <div class="chips" id="tfilters"></div>
+      <div class="tl" id="cases"></div>
+      <p class="note" style="margin-top:16px">Estados judiciales según la información disponible hasta 2024. Pueden haber cambiado: confirma en la Fiscalía, la Corte Suprema, la Procuraduría o la Contraloría.</p>
+    </section>
+
+    <!-- MECANISMOS -->
+    <section class="view" id="v-mecanismos" hidden>
+      <div class="vh"><div class="kicker">Anatomía</div><h2>Cómo funciona un acto de corrupción</h2>
+        <p class="lede">Siete mecanismos explicados con un ejemplo inventado, paso a paso, en la alcaldía ficticia de Villa Alegre. Ningún personaje ni hecho es real.</p></div>
+      <div class="mgrid"><div class="mlist" id="mlist"></div><div class="card" id="mdetail"></div></div>
+    </section>
+
+    <!-- CALCULADORA -->
+    <section class="view" id="v-calculadora" hidden>
+      <div class="vh"><div class="kicker">Costo de oportunidad</div><h2>¿Qué se pudo hacer con ese dinero?</h2>
+        <p class="lede">Escribe una cifra en millones de pesos o elige una de las cifras reportadas de casos reales. La calculadora la convierte en bienes públicos usando costos de referencia que puedes editar.</p></div>
+      <div class="calc">
+        <div class="card">
+          <div class="field"><label for="amt">Monto (millones de pesos)</label><input id="amt" type="number" min="0" step="any" inputmode="decimal" value="70000"></div>
+          <div class="sub" style="margin-top:16px">Cifras de referencia</div>
+          <div class="chips" id="presets" style="margin-top:8px"></div>
+          <div class="sub" style="margin-top:18px">Costos por unidad (millones de pesos)</div>
+          <div id="costs"></div>
+          <p class="note" style="margin-top:12px">Los costos son supuestos del atlas para ilustrar el orden de magnitud. No son cifras oficiales; cámbialos por los de tu región.</p>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:12px"><div class="kicker">Monto elegido</div><div class="big" id="amtTxt"></div></div>
+          <div class="results" id="results"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MUNDO -->
+    <section class="view" id="v-colombia-mundo" hidden>
+      <div class="vh"><div class="kicker">Comparativo</div><h2>Colombia frente a la región</h2>
+        <p class="lede">Índice de Percepción de la Corrupción de Transparencia Internacional. Va de 0 (muy corrupto) a 100 (muy transparente). Mide percepción de expertos, no corrupción real.</p></div>
+      <div class="card">
+        <div class="chips" id="cleg"></div>
+        <div class="chartbox" style="margin-top:12px" id="chart"></div>
+        <div class="yr-ctl"><label for="yr" class="kicker">Año</label><input id="yr" type="range" min="0" max="7" step="1" value="7"><output id="yrOut" for="yr"></output></div>
+        <p id="insight" style="font-weight:600"></p>
+        <div id="bars" style="margin-top:8px"></div>
+        <p class="note" style="margin-top:12px">Cifras redondeadas de Transparencia Internacional, años disponibles en esta comparación: 2012 a 2024. Confirma y consulta los años más recientes en transparency.org.</p>
+      </div>
+    </section>
+
+    <!-- DETECTIVE -->
+    <section class="view" id="v-detective" hidden>
+      <div class="vh"><div class="kicker">Juego</div><h2>Detective anticorrupción</h2>
+        <p class="lede">Siete expedientes ficticios de contratación pública. Elige la señal de alerta correcta. Ojo: algunos contratos son normales.</p></div>
+      <div class="card" id="game"></div>
+    </section>
+
+    <!-- GLOSARIO -->
+    <section class="view" id="v-glosario" hidden>
+      <div class="vh"><div class="kicker">Referencia</div><h2>Glosario y marco legal</h2>
+        <p class="lede">Delitos, conceptos, instituciones y normas clave. Los artículos citados son del Código Penal (Ley 599 de 2000) salvo que se indique otra norma.</p></div>
+      <div class="chips" id="gfilters"></div>
+      <div class="field"><label for="gq">Buscar en el glosario</label><input id="gq" type="search" placeholder="peculado, SECOP, Procuraduría" autocomplete="off"></div>
+      <div class="gl" id="gl"></div>
+    </section>
+
+    <!-- QUÉ HACER -->
+    <section class="view" id="v-que-hacer" hidden>
+      <div class="vh"><div class="kicker">Acción</div><h2>¿Qué puedo hacer yo?</h2>
+        <p class="lede">Tres caminos concretos y una lista de verificación que se guarda en tu navegador.</p></div>
+      <div class="cols">
+        <div class="card"><h3>Cómo denunciar</h3>
+          <ol><li>Reúne evidencias: documentos, fotos con fecha, números de contrato, nombres de entidades.</li>
+          <li>Elige la entidad según el tema: la Fiscalía si hay un posible delito; la Procuraduría si un servidor público actuó mal; la Contraloría si se usaron mal recursos públicos.</li>
+          <li>Presenta la denuncia por el canal oficial de esa entidad y guarda el número de radicado.</li>
+          <li>Si necesitas ayuda, la personería de tu municipio orienta a los ciudadanos.</li></ol></div>
+        <div class="card"><h3>Cómo consultar contratos</h3>
+          <ol><li>Entra al SECOP, el sistema donde las entidades publican sus contratos.</li>
+          <li>Busca por entidad, municipio, nombre del contratista o palabras del objeto.</li>
+          <li>Revisa valor, plazo, modalidad de selección, número de oferentes y adiciones.</li>
+          <li>Compara con lo que ves en el terreno. El portal de datos abiertos permite descargar información para analizarla.</li></ol></div>
+        <div class="card"><h3>Cómo ejercer veeduría</h3>
+          <ol><li>La Ley 850 de 2003 reconoce el derecho de los ciudadanos a vigilar la gestión pública.</li>
+          <li>Reúnete con vecinos u organizaciones y escojan una obra o programa concreto.</li>
+          <li>Inscriban la veeduría ante la personería o la cámara de comercio, según corresponda.</li>
+          <li>Pidan información por escrito y lleven registro de las respuestas.</li></ol></div>
+      </div>
+      <div class="card" style="margin-top:14px"><div class="kicker">Portales oficiales y organizaciones</div>
+        <div class="links" id="links"></div>
+        <p class="note" style="margin-top:10px">Los enlaces abren sitios externos en otra pestaña. Verifica siempre que la dirección sea la oficial antes de entregar datos personales.</p></div>
+      <div class="card" style="margin-top:14px"><div class="kicker">Tu lista de verificación</div>
+        <p id="chkTxt" style="font-weight:600;margin-top:6px"></p>
+        <div class="prog" style="margin-top:8px"><i id="chkBar" style="width:0%"></i></div>
+        <div class="check" id="check"></div></div>
+    </section>
+
+    <!-- BÚSQUEDA -->
+    <section class="view" id="v-buscar" hidden>
+      <div class="vh"><div class="kicker">Búsqueda</div><h2 id="sTitle">Resultados</h2></div>
+      <div class="res-list" id="sres"></div>
+    </section>
+
+    <footer class="foot">Material educativo. Los datos se resumen de fuentes públicas (Fiscalía, Corte Suprema, Procuraduría, Contraloría, Transparencia Internacional y prensa verificada) y deben confirmarse en ellas. Los estados procesales cambian con el tiempo. Los ejemplos y el juego son ficticios.</footer>
+  </main>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var norm=function(s){return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")};
+var fmt=function(n){return Number(n).toLocaleString("es-CO",{maximumFractionDigits:0})};
+var store={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+/* ---------- DATOS ---------- */
+var VIEWS=[["inicio","Inicio"],["mapa","Mapa"],["escandalos","Línea de tiempo"],["mecanismos","Mecanismos"],["calculadora","Calculadora"],["colombia-mundo","Colombia y el mundo"],["detective","Detective"],["glosario","Glosario y leyes"],["que-hacer","¿Qué puedo hacer?"]];
+var ids=VIEWS.map(function(v){return v[0]});
+
+var DEPTS=[
+["sanandres","San Andrés y Providencia","SAP",0,0,"San Andrés","Insular"],
+["atlantico","Atlántico","ATL",3,0,"Barranquilla","Caribe"],
+["magdalena","Magdalena","MAG",4,0,"Santa Marta","Caribe"],
+["guajira","La Guajira","GUJ",5,0,"Riohacha","Caribe"],
+["cordoba","Córdoba","COR",2,1,"Montería","Caribe"],
+["sucre","Sucre","SUC",3,1,"Sincelejo","Caribe"],
+["bolivar","Bolívar","BOL",4,1,"Cartagena","Caribe"],
+["cesar","Cesar","CES",5,1,"Valledupar","Caribe"],
+["nsantander","Norte de Santander","NSA",6,1,"Cúcuta","Andina"],
+["choco","Chocó","CHO",1,2,"Quibdó","Pacífica"],
+["antioquia","Antioquia","ANT",2,2,"Medellín","Andina"],
+["santander","Santander","SAN",5,2,"Bucaramanga","Andina"],
+["arauca","Arauca","ARA",7,2,"Arauca","Orinoquía"],
+["risaralda","Risaralda","RIS",2,3,"Pereira","Andina"],
+["caldas","Caldas","CAL",3,3,"Manizales","Andina"],
+["boyaca","Boyacá","BOY",5,3,"Tunja","Andina"],
+["casanare","Casanare","CAS",6,3,"Yopal","Orinoquía"],
+["valle","Valle del Cauca","VAL",1,4,"Cali","Pacífica"],
+["quindio","Quindío","QUI",2,4,"Armenia","Andina"],
+["tolima","Tolima","TOL",3,4,"Ibagué","Andina"],
+["cundinamarca","Cundinamarca","CUN",4,4,"Bogotá","Andina"],
+["bogota","Bogotá D. C.","BOG",5,4,"Bogotá","Andina"],
+["meta","Meta","MET",6,4,"Villavicencio","Orinoquía"],
+["vichada","Vichada","VIC",8,4,"Puerto Carreño","Orinoquía"],
+["cauca","Cauca","CAU",1,5,"Popayán","Pacífica"],
+["huila","Huila","HUI",3,5,"Neiva","Andina"],
+["guaviare","Guaviare","GUV",6,5,"San José del Guaviare","Amazonía"],
+["guainia","Guainía","GUI",8,5,"Inírida","Amazonía"],
+["narino","Nariño","NAR",0,6,"Pasto","Pacífica"],
+["caqueta","Caquetá","CAQ",4,6,"Florencia","Amazonía"],
+["vaupes","Vaupés","VAU",7,6,"Mitú","Amazonía"],
+["putumayo","Putumayo","PUT",3,7,"Mocoa","Amazonía"],
+["amazonas","Amazonas","AMA",5,7,"Leticia","Amazonía"]
+].map(function(a){return {id:a[0],n:a[1],ab:a[2],c:a[3],r:a[4],cap:a[5],reg:a[6]}});
+
+var TYPES=["Contratación","Salud","Política","Finanzas","Agro","Educación","Justicia"];
+
+var CASES=[
+{id:"parapolitica",ord:1,year:"2006",titulo:"Parapolítica",tipos:["Política"],et:"condena",estado:"Con condenas",deptos:["sucre","cordoba","magdalena","cesar"],
+ que:"Investigaciones de la Corte Suprema revelaron alianzas entre políticos y grupos paramilitares para capturar votos y poder local en varias regiones del país.",
+ quienes:"Congresistas, gobernadores, alcaldes y jefes de grupos paramilitares.",
+ dinero:"No hay una cifra única. El daño principal es institucional y electoral.",
+ fin:"Decenas de congresistas fueron condenados por la Corte Suprema en los años siguientes.",
+ verifica:"Sentencias de la Corte Suprema de Justicia, Sala de Casación Penal."},
+{id:"agro",ord:2,year:"2009",titulo:"Agro Ingreso Seguro",tipos:["Agro","Política"],et:"condena",estado:"Condena de primera instancia",deptos:["bogota"],
+ que:"Un programa de subsidios pensado para pequeños productores terminó entregando recursos a familias con gran patrimonio, que dividían predios para recibir más ayudas.",
+ quienes:"El exministro de Agricultura Andrés Felipe Arias, funcionarios del ministerio y beneficiarios de los subsidios.",
+ dinero:"Miles de millones de pesos en subsidios cuestionados.",
+ fin:"Arias fue condenado en 2014 por la Corte Suprema. El caso tuvo un largo trámite posterior, incluida su extradición desde Estados Unidos en 2019.",
+ verifica:"Corte Suprema de Justicia, Fiscalía General y archivo de prensa 2009 a 2019."},
+{id:"carrusel",ord:3,year:"2010",titulo:"Carrusel de la contratación de Bogotá",tipos:["Contratación","Política"],et:"condena",estado:"Con condenas",deptos:["bogota"],
+ que:"Una red de contratistas y funcionarios se repartió contratos de obras del Instituto de Desarrollo Urbano (IDU) a cambio de pagos ilegales. Varias obras se retrasaron o no se terminaron.",
+ quienes:"El exalcalde Samuel Moreno, el entonces senador Iván Moreno, contratistas del Grupo Nule y otros implicados.",
+ dinero:"Contratos de gran valor. Las cifras varían según la fuente.",
+ fin:"Varios implicados fueron condenados, entre ellos el exalcalde Samuel Moreno (condena de 2019).",
+ verifica:"Fiscalía General, Consejo de Estado y sentencias penales."},
+{id:"saludcoop",ord:4,year:"2011",titulo:"Saludcoop",tipos:["Salud","Finanzas"],et:"proceso",estado:"Procesos fiscales y penales",deptos:["bogota"],
+ que:"La Superintendencia de Salud intervino la EPS Saludcoop tras detectar uso indebido de recursos de la salud, entre ellos inversiones en inmuebles y otros negocios ajenos al servicio.",
+ quienes:"Directivos de la EPS y organizaciones vinculadas.",
+ dinero:"Más de un billón de pesos de detrimento, según la Contraloría.",
+ fin:"La EPS fue liquidada y se abrieron procesos fiscales y penales. Sus afiliados pasaron a otras EPS.",
+ verifica:"Contraloría General, Superintendencia Nacional de Salud y Fiscalía."},
+{id:"interbolsa",ord:5,year:"2012",titulo:"Interbolsa",tipos:["Finanzas"],et:"proceso",estado:"Procesos penales y sanciones",deptos:["bogota"],
+ que:"La comisionista de bolsa Interbolsa colapsó tras operaciones de alto riesgo con acciones de la empresa Fabricato y maniobras que dejaron pérdidas a muchos inversionistas.",
+ quienes:"Directivos de Interbolsa y operadores del mercado.",
+ dinero:"Pérdidas para miles de inversionistas. Las cifras varían según la fuente.",
+ fin:"Hubo procesos penales y sanciones de la Superintendencia Financiera. El caso mostró debilidades en la supervisión del mercado.",
+ verifica:"Superintendencia Financiera y Fiscalía General."},
+{id:"reficar",ord:6,year:"2016",titulo:"Sobrecostos de Reficar",tipos:["Contratación"],et:"proceso",estado:"Procesos fiscales y penales",deptos:["bolivar"],
+ que:"La ampliación de la refinería de Cartagena terminó costando casi el doble de lo presupuestado al inicio.",
+ quienes:"Directivos de Reficar y Ecopetrol y contratistas de la obra.",
+ dinero:"De cerca de US$4.000 millones a unos US$8.000 millones.",
+ fin:"La Contraloría y la Fiscalía abrieron procesos contra exdirectivos y contratistas, y hubo arbitrajes internacionales con contratistas.",
+ verifica:"Contraloría General, Fiscalía y Ecopetrol."},
+{id:"odebrecht",ord:7,year:"2016",titulo:"Odebrecht y la Ruta del Sol II",tipos:["Contratación","Política"],et:"proceso",estado:"Condenas y procesos",deptos:["cundinamarca","cesar"],
+ que:"La constructora brasileña Odebrecht admitió ante la justicia de Estados Unidos haber pagado sobornos en varios países de la región, incluida Colombia, para quedarse con contratos de obras como la Ruta del Sol II, entre Puerto Salgar (Cundinamarca) y San Roque (Cesar).",
+ quienes:"Funcionarios, políticos, directivos de la constructora y empresarios socios del consorcio.",
+ dinero:"Alrededor de US$11 millones en sobornos reconocidos para Colombia.",
+ fin:"Se abrieron procesos penales. Varios implicados aceptaron cargos o fueron condenados, y otros procesos siguen su curso.",
+ verifica:"Fiscalía General, Corte Suprema y comunicado del Departamento de Justicia de EE. UU. de diciembre de 2016."},
+{id:"toga",ord:8,year:"2017",titulo:"Cartel de la Toga",tipos:["Justicia","Política"],et:"condena",estado:"Con condenas",deptos:["bogota"],
+ que:"La Fiscalía reveló una red que habría cobrado sobornos para influir en decisiones de la Corte Suprema sobre procesos contra congresistas.",
+ quienes:"Exmagistrados de la Corte Suprema, el exfiscal anticorrupción Luis Gustavo Moreno, abogados y congresistas.",
+ dinero:"Sobornos a cambio de favores judiciales. No hay una cifra única consolidada.",
+ fin:"Moreno aceptó cargos y fue condenado. Otros exmagistrados y congresistas han sido procesados y algunos condenados.",
+ verifica:"Fiscalía General y Corte Suprema de Justicia."},
+{id:"hemofilia",ord:9,year:"2016",titulo:"Cartel de la hemofilia en Córdoba",tipos:["Salud"],et:"proceso",estado:"Procesos penales",deptos:["cordoba"],
+ que:"La Fiscalía investigó una red que habría cobrado al sistema de salud tratamientos de hemofilia para pacientes que no los recibían o que no existían.",
+ quienes:"Funcionarios de salud, IPS y personas vinculadas al sistema local, según las investigaciones.",
+ dinero:"Miles de millones de pesos según las investigaciones.",
+ fin:"Se abrieron procesos penales contra los implicados. Consulta el estado actual en la Fiscalía.",
+ verifica:"Fiscalía General y Superintendencia Nacional de Salud."},
+{id:"pae",ord:10,year:"2018",titulo:"Programa de Alimentación Escolar",tipos:["Educación","Contratación"],et:"proceso",estado:"Múltiples procesos",deptos:["guajira"],
+ que:"El programa que alimenta a estudiantes ha sido objeto de numerosos procesos por sobrecostos, raciones incompletas o no entregadas y operadores sin capacidad, en distintos territorios.",
+ quienes:"Operadores del programa y funcionarios territoriales, según cada caso.",
+ dinero:"Varía por caso y territorio.",
+ fin:"Cada proceso avanza por separado. Hay sanciones fiscales y disciplinarias en varios territorios, entre ellos La Guajira.",
+ verifica:"Procuraduría, Contraloría y Superintendencia de Industria y Comercio."},
+{id:"centros",ord:11,year:"2021",titulo:"Centros Poblados",tipos:["Educación","Contratación"],et:"proceso",estado:"Investigaciones y sanciones",deptos:["bogota"],
+ que:"El Ministerio de las TIC adjudicó un contrato para llevar internet a zonas rurales y entregó un anticipo respaldado por pólizas que resultaron falsas. La conectividad no llegó como se prometió.",
+ quienes:"El Ministerio de las TIC, la unión temporal contratista y las pólizas falsificadas.",
+ dinero:"Un anticipo de unos 70.000 millones de pesos.",
+ fin:"La ministra Karen Abudinen dejó el cargo en 2021. La Fiscalía y los entes de control abrieron procesos.",
+ verifica:"Fiscalía General, Procuraduría y Contraloría."},
+{id:"ungrd",ord:12,year:"2024",titulo:"UNGRD y los carrotanques",tipos:["Contratación","Política"],et:"curso",estado:"En curso",deptos:["bogota","guajira"],
+ que:"Dos exdirectivos de la Unidad Nacional para la Gestión del Riesgo de Desastres reconocieron irregularidades, entre ellas contratos como la compra de carrotanques para La Guajira, y dijeron que se pagaron sobornos a congresistas a cambio de apoyo político.",
+ quienes:"Exdirectivos de la UNGRD, contratistas, y congresistas y exfuncionarios mencionados en la investigación.",
+ dinero:"Contratos por decenas de miles de millones de pesos.",
+ fin:"Hay procesos abiertos en la Fiscalía y en la Corte Suprema. Algunas personas están procesadas y otras bajo investigación. El estado puede haber cambiado.",
+ verifica:"Fiscalía General, Corte Suprema y Procuraduría."}
+];
+
+var MECS=[
+{n:"Soborno (cohecho)",def:"Ofrecer o recibir dinero u otro beneficio a cambio de que un servidor público haga, omita o retarde algo propio de su cargo.",ley:"Cohecho, arts. 405 a 407 del Código Penal",
+ pasos:["Una empresa quiere ganar un contrato de $3.000 millones para reparar el colegio de Villa Alegre.","Un intermediario ofrece al secretario de infraestructura una comisión del 10% si el contrato se adjudica a esa empresa.","El secretario ajusta los requisitos del proceso para que otras empresas no puedan cumplirlos.","La empresa gana, hace menos obra de la que cobra, y parte del dinero vuelve como comisión.","El colegio queda con arreglos incompletos y nadie lo reporta porque el interventor también recibió un pago."],
+ flags:["Requisitos muy específicos que solo cumple una empresa.","Interventores que nunca reportan fallas.","Funcionarios con gastos que no cuadran con su salario."]},
+{n:"Sobrecostos",def:"Pagar mucho más de lo que vale una obra, un bien o un servicio, ya sea por precios inflados desde el presupuesto o por adiciones sucesivas.",ley:"Peculado y contrato sin cumplimiento de requisitos legales, arts. 397 y 410; además, responsabilidad fiscal",
+ pasos:["La alcaldía presupuesta un acueducto veredal con estudios previos superficiales.","El presupuesto incluye precios por encima del mercado en cemento y tubería.","A mitad de obra aparecen imprevistos y se aprueban adiciones de dinero y de plazo.","El acueducto termina costando casi el doble y se entrega tarde.","Nadie compara el costo final con el de obras parecidas en otros municipios."],
+ flags:["Adiciones repetidas sin sustento técnico.","Precios muy distintos a los de obras similares.","Estudios previos que no se publican."]},
+{n:"Contratación directa abusiva",def:"La ley permite contratar sin licitación en casos específicos, como la urgencia manifiesta. Se vuelve irregular cuando se usa para evitar la competencia.",ley:"Contrato sin cumplimiento de requisitos legales, art. 410, y faltas disciplinarias",
+ pasos:["Villa Alegre tiene una necesidad prevista hace meses: arreglar la plaza de mercado.","Se espera hasta el último momento y se declara una urgencia manifiesta que no es real.","El contrato se firma en horas con un proveedor conocido del alcalde.","No se comparan precios ni propuestas.","Después se descubre que el valor era el doble del habitual."],
+ flags:["Urgencias que se repiten cada fin de año.","Contratos a un mismo proveedor una y otra vez.","Objetos vagos como “asesoría integral”."]},
+{n:"Carrusel de contratación",def:"Un grupo de empresas se turna las licitaciones: se ponen de acuerdo en quién gana cada una, y los demás presentan ofertas de relleno.",ley:"Acuerdos restrictivos de la competencia, art. 410A, e interés indebido en la celebración de contratos, art. 409",
+ pasos:["Cuatro empresas de Villa Alegre acuerdan repartirse las obras del año.","Para cada licitación, tres presentan ofertas más caras o con errores a propósito.","La que “le toca” gana con un precio alto.","Un funcionario facilita el proceso y evita revisar las ofertas con rigor.","Las perdedoras reciben subcontratos o una compensación después."],
+ flags:["Ofertas que difieren por cifras mínimas.","Empresas con los mismos socios, dirección o contador.","Ganadores que se alternan de forma sospechosa."]},
+{n:"Clientelismo",def:"Intercambiar favores públicos, como empleos o contratos, por apoyo político o votos, en lugar de decidir por mérito o necesidad.",ley:"Corrupción al sufragante, art. 390, y tráfico de influencias, art. 411",
+ pasos:["Un candidato de Villa Alegre promete empleos y contratos a líderes de barrio.","Gana la elección y reparte cargos entre quienes lo apoyaron.","Se contrata personal sin el perfil necesario para esos cargos.","Los servicios públicos empeoran porque se decide por lealtad y no por capacidad.","En la próxima elección el ciclo se repite."],
+ flags:["Nóminas que crecen después de las elecciones.","Contratos de prestación de servicios sin productos medibles.","Ayudas que llegan solo a quienes apoyaron a la administración."]},
+{n:"Lavado de activos",def:"Dar apariencia legal al dinero que viene de un delito, por ejemplo de un soborno.",ley:"Lavado de activos, art. 323",
+ pasos:["Un funcionario de Villa Alegre recibe $500 millones en sobornos.","El dinero se mueve a través de empresas de papel y de familiares que figuran como dueños.","Se invierte en lotes, apartamentos o un negocio.","Con el tiempo el patrimonio parece legítimo.","Un análisis de movimientos financieros muestra que no coincide con los ingresos declarados."],
+ flags:["Patrimonio que no cuadra con los ingresos.","Testaferros: personas que aparecen como dueñas sin serlo.","Empresas recién creadas que reciben pagos grandes."]},
+{n:"Conflicto de intereses",def:"Cuando quien decide tiene un interés personal que puede torcer su decisión, por ejemplo un familiar o un socio que se beneficia.",ley:"Régimen de inhabilidades e incompatibilidades y código disciplinario; puede configurar interés indebido en contratos, art. 409",
+ pasos:["Una funcionaria de Villa Alegre evalúa las ofertas de una licitación.","Entre las ofertas está la de la empresa de su primo, y no lo declara.","Ella da más puntos a esa empresa en los criterios más subjetivos.","La empresa del primo gana pese a no ser la más barata.","Más tarde, la funcionaria renuncia y pasa a trabajar en esa empresa."],
+ flags:["Evaluadores que no declaran parentescos ni intereses.","Criterios de calificación subjetivos.","Funcionarios que pasan directo a trabajar con quienes contrataban."]}
+];
+
+var GLOS=[
+["Peculado","Delito","Un servidor público se apropia o usa indebidamente bienes del Estado que tiene a su cargo. Art. 397."],
+["Cohecho","Delito","Recibir u ofrecer dinero u otra utilidad para que un servidor público haga, omita o retarde un acto de su cargo. Arts. 405 (propio), 406 (impropio) y 407 (por dar u ofrecer)."],
+["Concusión","Delito","Un servidor público abusa de su cargo para obligar o inducir a alguien a dar o prometer dinero u otra utilidad. Art. 404."],
+["Prevaricato","Delito","Un servidor público emite una resolución, dictamen o concepto manifiestamente contrario a la ley. Art. 413 (por acción)."],
+["Enriquecimiento ilícito","Delito","Un servidor público aumenta su patrimonio de forma injustificada derivada de actividades ilegales. Art. 412."],
+["Tráfico de influencias","Delito","Un servidor público utiliza indebidamente su influencia sobre otro servidor para obtener un beneficio. Art. 411."],
+["Interés indebido en la celebración de contratos","Delito","Un servidor público se interesa en provecho propio o de un tercero en un contrato en el que interviene por razón de su cargo. Art. 409."],
+["Contrato sin cumplimiento de requisitos legales","Delito","Tramitar, celebrar o liquidar un contrato sin cumplir los requisitos que exige la ley. Art. 410."],
+["Acuerdos restrictivos de la competencia","Delito","Ponerse de acuerdo para alterar el resultado de una licitación o concurso público. Art. 410A, incorporado por el Estatuto Anticorrupción."],
+["Lavado de activos","Delito","Dar apariencia de legalidad a bienes o dinero de origen ilícito. Art. 323."],
+["Pliegos sastre","Concepto","Documentos de una licitación con requisitos escritos a la medida de un oferente para que solo él pueda cumplirlos."],
+["Carrusel de contratación","Concepto","Acuerdo entre contratistas y funcionarios para repartirse contratos públicos de forma coordinada."],
+["Urgencia manifiesta","Concepto","Causal de contratación directa para atender situaciones de emergencia. Debe justificarse y no puede usarse para evitar la competencia."],
+["Interventoría","Concepto","Vigilancia técnica, administrativa y financiera de un contrato por una persona o firma distinta del contratista."],
+["Detrimento patrimonial","Concepto","Daño al patrimonio público causado por una gestión fiscal irregular. Lo determinan los organismos de control fiscal."],
+["Responsabilidad fiscal","Concepto","Obligación de reparar el daño al erario que puede recaer sobre quien administró recursos públicos. La decide la Contraloría."],
+["Falta disciplinaria","Concepto","Incumplimiento de los deberes de un servidor público. La investiga la Procuraduría o la oficina de control interno."],
+["Presunción de inocencia","Concepto","Toda persona se presume inocente hasta que una sentencia en firme demuestre lo contrario."],
+["Testaferro","Concepto","Persona que figura como dueña de bienes o empresas que en realidad pertenecen a otra."],
+["Veeduría ciudadana","Concepto","Mecanismo democrático para que los ciudadanos vigilen la gestión pública. Regulado por la Ley 850 de 2003."],
+["SECOP","Concepto","Sistema Electrónico de Contratación Pública donde las entidades publican sus procesos y contratos. Administrado por Colombia Compra Eficiente."],
+["Fiscalía General de la Nación","Institución","Investiga y acusa los delitos, incluidos los de corrupción, ante los jueces."],
+["Procuraduría General de la Nación","Institución","Vigila la conducta de los servidores públicos y adelanta procesos disciplinarios."],
+["Contraloría General de la República","Institución","Ejerce el control fiscal sobre el uso de los recursos públicos. Las contralorías territoriales lo hacen en departamentos y municipios."],
+["Corte Suprema de Justicia","Institución","Investiga y juzga a los congresistas y a otros altos funcionarios con fuero."],
+["Consejo de Estado","Institución","Máximo tribunal de lo contencioso administrativo. Puede anular actos y contratos de la administración."],
+["Superintendencia de Industria y Comercio","Institución","Autoridad de competencia: investiga acuerdos entre empresas que alteran licitaciones."],
+["Secretaría de Transparencia","Institución","Dependencia de la Presidencia que coordina la política anticorrupción del Gobierno."],
+["Ley 80 de 1993","Ley","Estatuto General de Contratación de la Administración Pública."],
+["Ley 850 de 2003","Ley","Regula las veedurías ciudadanas."],
+["Ley 1474 de 2011","Ley","Estatuto Anticorrupción: refuerza los mecanismos de prevención, investigación y sanción de la corrupción."],
+["Ley 1712 de 2014","Ley","Ley de Transparencia y del Derecho de Acceso a la Información Pública."],
+["Ley 2195 de 2022","Ley","Adopta medidas en materia de transparencia, prevención y lucha contra la corrupción."]
+].map(function(a){return {t:a[0],c:a[1],d:a[2]}});
+
+var CPI_Y=[2012,2014,2016,2018,2020,2022,2023,2024];
+var CPI=[
+["Colombia",[36,37,37,36,39,39,40,39],"var(--blue)"],
+["Uruguay",[72,73,71,70,71,74,73,76],"var(--c3)"],
+["Chile",[72,73,66,67,67,67,66,63],"var(--c2)"],
+["Brasil",[43,43,40,35,38,38,36,34],"var(--c5)"],
+["Argentina",[35,34,36,40,42,38,37,37],"var(--c4)"],
+["México",[34,35,30,28,31,31,31,26],"var(--c6)"],
+["Perú",[38,38,35,35,38,36,33,31],"var(--gold)"]
+];
+
+var GAME=[
+{ctx:"Expediente 1\nEntidad: Alcaldía de Villa Alegre\nObjeto: Pavimentar 3 km de vía urbana\nValor: $4.200 millones\nRequisito del pliego: haber construido “exactamente 3 km de vía con adoquín rosado en este mismo municipio”.\nOferentes habilitados: 1",
+ q:"¿Qué señal de alerta ves?",o:["Pliego hecho a la medida de un oferente","El valor es demasiado bajo","Hay demasiados oferentes","Ninguna, el contrato es normal"],ok:0,
+ why:"Un requisito tan específico que solo cumple una empresa restringe la competencia. Es el típico pliego sastre."},
+{ctx:"Expediente 2\nEntidad: Secretaría de Gobierno de Villa Alegre\nObjeto: “Asesoría integral para el fortalecimiento institucional”\nModalidad: contratación directa\nValor: $2.000 millones\nFecha de firma: 30 de diciembre, tres días después de la solicitud.",
+ q:"¿Cuál es la señal más clara?",o:["El contratista es de la región","Objeto vago, sin productos medibles, adjudicado directo y a las carreras","La firma fue en diciembre, algo normal","Ninguna, el contrato es normal"],ok:1,
+ why:"Un objeto difuso sin entregables medibles, junto con contratación directa y apuro de fin de año, impide evaluar si se cumplió algo."},
+{ctx:"Expediente 3\nEntidad: Gobernación de Montes Verdes\nObjeto: Construcción de un puente\nValor inicial: $8.000 millones\nSeis meses después: adición de $4.000 millones (50%) sin nuevos estudios técnicos publicados.",
+ q:"¿Qué debería generar alerta?",o:["Que el puente sea importante","Que haya un interventor","Una adición enorme sin sustento técnico visible","Que la obra se contrate con una empresa grande"],ok:2,
+ why:"Las adiciones deben justificarse con estudios. Una adición del 50% sin sustento puede esconder un presupuesto inflado desde el inicio."},
+{ctx:"Expediente 4\nEntidad: Hospital de Río Claro\nObjeto: Dotación de equipos médicos\nOferentes: Tres empresas.\nDato: las tres comparten dirección, el mismo contador y sus ofertas difieren por menos de $1 millón.",
+ q:"¿Qué sugiere esto?",o:["Competencia sana entre empresas","Posible colusión entre los oferentes","Que los equipos son baratos","Un error de digitación"],ok:1,
+ why:"Oferentes aparentemente independientes con los mismos datos y ofertas casi idénticas son un indicio de posible acuerdo para simular competencia."},
+{ctx:"Expediente 5\nEntidad: Alcaldía de Villa Alegre\nObjeto: Mantenimiento del parque principal\nModalidad: licitación pública\nOferentes: cuatro. Estudios previos publicados. Precio cercano al promedio de obras similares. Plazos normales. Todo en SECOP II.",
+ q:"¿Qué señal de alerta ves?",o:["Pliego a la medida","Adjudicación a las carreras","Contratista sin experiencia","Ninguna evidente: parece un proceso normal"],ok:3,
+ why:"No toda contratación es sospechosa. Aquí hay competencia, información pública y precios razonables. Un buen veedor también sabe cuándo no hay señales."},
+{ctx:"Expediente 6\nEntidad: Secretaría de Infraestructura de Montes Verdes\nObjeto: Reparación de una escuela\nDato: la evaluadora de las ofertas es prima del gerente de la empresa ganadora y no declaró el parentesco.",
+ q:"¿Qué problema hay?",o:["Conflicto de intereses no declarado","Falta de interventoría","El valor es muy alto","El municipio es pequeño"],ok:0,
+ why:"Quien evalúa debe declararse impedido si tiene vínculos con un oferente. No hacerlo compromete la imparcialidad del proceso."},
+{ctx:"Expediente 7\nEntidad: Alcaldía de Río Claro\nObjeto: Restaurante escolar\nDato: la empresa ganadora se constituyó hace dos meses con un capital de $1 millón y recibió un anticipo del 50% de un contrato de $1.500 millones.",
+ q:"¿Qué señal pesa más?",o:["La empresa es nueva","Contratista sin experiencia ni capacidad que recibe un anticipo enorme","Que el contrato sea de alimentación","Que el municipio sea pequeño"],ok:1,
+ why:"Una empresa recién creada, sin capital ni experiencia, que maneja un anticipo del 50% concentra varios riesgos: incumplimiento y desvío de recursos."}
+];
+var LEVELS=["Observador","Veedor aprendiz","Veedor ciudadano","Veedor experto"];
+
+var COSTS=[
+["colegio","Colegio rural de 6 aulas",4000],
+["salud","Centro de salud de primer nivel",15000],
+["via","Kilómetro de vía terciaria mejorada",600],
+["beca","Beca universitaria de un año",15],
+["vis","Vivienda de interés social",130],
+["pae","Niño alimentado en el colegio un año",1.2]
+];
+var PRESETS=[["Anticipo de Centros Poblados",70000],["Sobornos Odebrecht en Colombia (aprox.)",33000],["Detrimento de Saludcoop (más de)",1400000]];
+
+var LINKS=[
+["Fiscalía General","https://www.fiscalia.gov.co"],["Procuraduría General","https://www.procuraduria.gov.co"],["Contraloría General","https://www.contraloria.gov.co"],
+["Portal Anticorrupción","https://www.anticorrupcion.gov.co"],["Colombia Compra Eficiente (SECOP)","https://www.colombiacompra.gov.co"],["Datos abiertos","https://www.datos.gov.co"],
+["Transparencia por Colombia","https://www.transparenciacolombia.org.co"],["Índice de Percepción de la Corrupción","https://www.transparency.org/en/cpi"]
+];
+var CHECK=[
+"Busqué en el SECOP un contrato de una obra de mi barrio o municipio.",
+"Revisé quién es el contratista, el valor, el plazo y las adiciones.",
+"Comparé el avance real de la obra con lo contratado.",
+"Guardé evidencias: fotos con fecha, documentos y números de contrato.",
+"Identifiqué la entidad competente: Fiscalía, Procuraduría, Contraloría o personería.",
+"Presenté la queja o denuncia por un canal oficial y guardé el radicado.",
+"Averigüé si hay una veeduría ciudadana en mi municipio o la armé con vecinos."
+];
+
+var state={dept:"bogota",tf:"Todos",mapType:"Todos",openCase:null,mec:0,step:0,gf:"Todos",cs:{},yr:7,amt:70000};
+CPI.forEach(function(c){state.cs[c[0]]=true});
+var costVals={};COSTS.forEach(function(c){costVals[c[0]]=c[2]});
+
+/* ---------- ROUTER ---------- */
+function go(view){var q=$("#q");if(q.value){q.value=""}if(location.hash==="#"+view){show()}else{location.hash=view}}
+function show(){
+  var q=$("#q").value.trim();
+  var id=location.hash.slice(1);if(ids.indexOf(id)<0)id="inicio";
+  var active=q.length>=2?"buscar":id;
+  $$(".view").forEach(function(v){v.hidden=v.id!=="v-"+active});
+  $$("#nav a").forEach(function(a){if(a.getAttribute("data-v")===id&&active!=="buscar"){a.setAttribute("aria-current","page")}else{a.removeAttribute("aria-current")}});
+  if(active==="escandalos")renderCases();
+  if(active==="buscar")renderSearch(q);
+}
+window.addEventListener("hashchange",function(){window.scrollTo(0,0);show()});
+
+/* ---------- INICIO ---------- */
+function initHome(){
+  $("#nav").innerHTML=VIEWS.map(function(v){return '<a href="#'+v[0]+'" data-v="'+v[0]+'">'+v[1]+'</a>'}).join("");
+  var last=CPI[0][1][CPI[0][1].length-1];
+  $("#stats").innerHTML=[[CASES.length,"casos documentados"],[DEPTS.length,"territorios en el mapa"],[MECS.length,"mecanismos explicados"],[last+"/100","Colombia en el IPC 2024"]].map(function(s){return '<div class="stat"><b>'+s[0]+'</b><span>'+s[1]+'</span></div>'}).join("");
+  var d={mapa:"Fichas por departamento con los casos que los tocan.",escandalos:"Casos clave desde 2006, con su estado judicial.",mecanismos:"Sobornos, carruseles, sobrecostos y más, paso a paso.",calculadora:"Convierte una cifra en colegios, becas o vías.",
+    "colombia-mundo":"Compara a Colombia con seis países de la región.",detective:"Siete expedientes ficticios para entrenar el ojo.",glosario:"Delitos, instituciones y leyes en lenguaje claro.","que-hacer":"Cómo denunciar, revisar contratos y vigilar."};
+  $("#entry").innerHTML=VIEWS.slice(1).map(function(v){return '<a href="#'+v[0]+'"><strong>'+v[1]+'</strong><span>'+d[v[0]]+'</span></a>'}).join("");
+}
+
+/* ---------- MAPA ---------- */
+function countFor(dep){return CASES.filter(function(c){return c.deptos.indexOf(dep)>=0&&(state.mapType==="Todos"||c.tipos.indexOf(state.mapType)>=0)})}
+function renderMap(){
+  var max=1;DEPTS.forEach(function(d){max=Math.max(max,countFor(d.id).length)});
+  $("#tilemap").innerHTML=DEPTS.map(function(d){
+    var n=countFor(d.id).length,p=Math.round(n/max*55);
+    return '<button type="button" class="tile" data-d="'+d.id+'" style="grid-column:'+(d.c+1)+';grid-row:'+(d.r+1)+';--p:'+p+'" aria-pressed="'+(state.dept===d.id)+'" aria-label="'+d.n+', '+n+' casos"><b>'+d.ab+'</b><i>'+n+'</i></button>';
+  }).join("");
+  renderDept();
+}
+function renderDept(){
+  var d=DEPTS.filter(function(x){return x.id===state.dept})[0];
+  var cs=countFor(d.id);
+  var html='<div class="kicker">Ficha territorial</div><h3>'+d.n+'</h3><div class="chips"><span class="tag">Capital: '+d.cap+'</span><span class="tag">Región '+d.reg+'</span></div>';
+  if(cs.length){
+    html+='<div class="sub">'+cs.length+(cs.length===1?" caso":" casos")+' en este atlas</div>'+cs.map(function(c){return '<button type="button" class="casebtn" data-c="'+c.id+'"><span><strong>'+c.titulo+'</strong><br><small>'+c.year+" · "+c.estado+'</small></span><span aria-hidden="true">→</span></button>'}).join("");
+  }else{
+    html+='<p>Este atlas no incluye casos con alcance en este territorio'+(state.mapType!=="Todos"?' para el tipo “'+state.mapType+'”':'')+'. Eso no significa que no existan: la selección es limitada.</p>';
+  }
+  html+='<p class="note" style="margin-top:14px">Para casos locales, consulta la contraloría y la personería de tu departamento y el SECOP.</p>';
+  $("#dpanel").innerHTML=html;
+}
+function initMap(){
+  $("#mapType").innerHTML=["Todos"].concat(TYPES).map(function(t){return '<option value="'+t+'">'+(t==="Todos"?"Todos los tipos":t)+'</option>'}).join("");
+  $("#mapType").addEventListener("change",function(e){state.mapType=e.target.value;renderMap()});
+  $("#tilemap").addEventListener("click",function(e){var b=e.target.closest(".tile");if(!b)return;state.dept=b.getAttribute("data-d");renderMap()});
+  $("#dpanel").addEventListener("click",function(e){var b=e.target.closest(".casebtn");if(!b)return;openCase(b.getAttribute("data-c"))});
+  renderMap();
+}
+function openCase(id){state.openCase=id;state.tf="Todos";if(location.hash==="#escandalos"){show()}else{var q=$("#q");q.value="";location.hash="escandalos"}}
+
+/* ---------- ESCÁNDALOS ---------- */
+function renderCases(){
+  $("#tfilters").innerHTML=["Todos"].concat(TYPES).map(function(t){return '<button type="button" class="chip" data-t="'+t+'" aria-pressed="'+(state.tf===t)+'">'+t+'</button>'}).join("");
+  var list=CASES.filter(function(c){return state.tf==="Todos"||c.tipos.indexOf(state.tf)>=0}).sort(function(a,b){return a.ord-b.ord});
+  $("#cases").innerHTML=list.map(function(c){
+    var terr=c.deptos.map(function(id){var d=DEPTS.filter(function(x){return x.id===id})[0];return '<button type="button" class="chip" data-d="'+id+'">'+d.n+'</button>'}).join("");
+    return '<details class="case" data-id="'+c.id+'"'+(state.openCase===c.id?" open":"")+'><summary><span class="yr">'+c.year+'</span><span class="ct"><strong>'+c.titulo+'</strong><span class="tags">'+c.tipos.map(function(t){return '<span class="tag">'+t+'</span>'}).join("")+'</span></span><span class="stamp s-'+c.et+'">'+c.estado+'</span></summary>'+
+    '<div class="cbody"><dl><div><dt>Qué pasó</dt><dd>'+c.que+'</dd></div><div><dt>Quiénes aparecen</dt><dd>'+c.quienes+'</dd></div><div><dt>Dinero</dt><dd>'+c.dinero+'</dd></div><div><dt>Cómo va el proceso</dt><dd>'+c.fin+'</dd></div><div><dt>Dónde verificar</dt><dd>'+c.verifica+'</dd></div></dl><div><div class="sub" style="margin-bottom:6px">Ver en el mapa</div><div class="chips">'+terr+'</div></div><p class="note">Las personas mencionadas se presumen inocentes mientras no exista sentencia en firme.</p></div></details>';
+  }).join("")||'<p>No hay casos con ese filtro.</p>';
+  if(state.openCase){var el=$('.case[data-id="'+state.openCase+'"]');if(el){setTimeout(function(){el.scrollIntoView({block:"start"})},0)}state.openCase=null}
+}
+function initCases(){
+  $("#tfilters").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;state.tf=b.getAttribute("data-t");renderCases()});
+  $("#cases").addEventListener("click",function(e){var b=e.target.closest("button[data-d]");if(!b)return;e.preventDefault();state.dept=b.getAttribute("data-d");state.mapType="Todos";$("#mapType").value="Todos";renderMap();go("mapa")});
+}
+
+/* ---------- MECANISMOS ---------- */
+function renderMecs(){
+  var m=MECS[state.mec],s=m.pasos[state.step];
+  $("#mlist").innerHTML=MECS.map(function(x,i){return '<button type="button" class="mbtn" data-i="'+i+'" aria-pressed="'+(i===state.mec)+'">'+x.n+'</button>'}).join("");
+  $("#mdetail").innerHTML='<h3 style="font-size:1.6rem;font-weight:800">'+m.n+'</h3><p style="margin-top:8px;max-width:62ch">'+m.def+'</p><p style="margin-top:10px"><span class="tag">'+m.ley+'</span></p>'+
+  '<div class="step"><div class="n">Ejemplo ficticio · paso '+(state.step+1)+' de '+m.pasos.length+'</div><p>'+s+'</p><div class="dots">'+m.pasos.map(function(_,i){return '<button type="button" class="dot'+(i<=state.step?" on":"")+'" data-s="'+i+'" aria-label="Ir al paso '+(i+1)+'"></button>'}).join("")+'</div>'+
+  '<div class="stepnav"><button type="button" class="btn ghost" data-nav="-1"'+(state.step===0?" disabled":"")+'>Anterior</button><button type="button" class="btn" data-nav="1"'+(state.step===m.pasos.length-1?" disabled":"")+'>Siguiente</button></div></div>'+
+  '<div class="two"><div><div class="sub">Señales de alerta</div><ul class="flags">'+m.flags.map(function(f){return "<li>"+f+"</li>"}).join("")+'</ul></div><div><div class="sub">Qué hacer si lo ves</div><p style="margin-top:8px">Reúne evidencia y repórtalo a la Fiscalía, la Procuraduría o la Contraloría. Mira la sección “¿Qué puedo hacer?”.</p></div></div>';
+}
+function initMecs(){
+  $("#mlist").addEventListener("click",function(e){var b=e.target.closest(".mbtn");if(!b)return;state.mec=+b.getAttribute("data-i");state.step=0;renderMecs()});
+  $("#mdetail").addEventListener("click",function(e){
+    var n=e.target.closest("[data-nav]"),d=e.target.closest(".dot");
+    if(n){state.step=Math.max(0,Math.min(MECS[state.mec].pasos.length-1,state.step+(+n.getAttribute("data-nav"))))}
+    else if(d){state.step=+d.getAttribute("data-s")}else return;
+    renderMecs();
+  });
+  renderMecs();
+}
+
+/* ---------- CALCULADORA ---------- */
+function money(m){if(m>=1000000)return "$"+(m/1000000).toLocaleString("es-CO",{maximumFractionDigits:2})+" billones";return "$"+fmt(m)+" millones"}
+function renderCalc(){
+  var a=Math.max(0,state.amt||0);
+  $("#amtTxt").textContent=money(a);
+  $("#results").innerHTML=COSTS.map(function(c){
+    var cost=+costVals[c[0]]||0,n=cost>0?Math.floor(a/cost):0;
+    return '<div class="card res"><b>'+fmt(n)+'</b><span>'+c[1]+(n===1?"":"")+'</span><small>a $'+cost.toLocaleString("es-CO")+' millones cada uno</small></div>';
+  }).join("");
+}
+function initCalc(){
+  $("#presets").innerHTML=PRESETS.map(function(p,i){return '<button type="button" class="chip" data-i="'+i+'">'+p[0]+": "+money(p[1])+'</button>'}).join("");
+  $("#costs").innerHTML=COSTS.map(function(c){return '<div class="field"><label for="cost-'+c[0]+'">'+c[1]+'</label><input id="cost-'+c[0]+'" data-k="'+c[0]+'" type="number" min="0" step="any" inputmode="decimal" value="'+c[2]+'"></div>'}).join("");
+  $("#amt").addEventListener("input",function(e){state.amt=parseFloat(e.target.value)||0;renderCalc()});
+  $("#presets").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;state.amt=PRESETS[+b.getAttribute("data-i")][1];$("#amt").value=state.amt;renderCalc()});
+  $("#costs").addEventListener("input",function(e){var k=e.target.getAttribute("data-k");if(!k)return;costVals[k]=parseFloat(e.target.value)||0;renderCalc()});
+  renderCalc();
+}
+
+/* ---------- MUNDO ---------- */
+function renderChart(){
+  var W=640,H=300,L=34,R=14,T=14,B=28,y0=2012,y1=2024;
+  var X=function(y){return L+(y-y0)/(y1-y0)*(W-L-R)},Y=function(v){return T+(80-v)/60*(H-T-B)};
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Evolución del puntaje del Índice de Percepción de la Corrupción por país">';
+  [20,30,40,50,60,70,80].forEach(function(v){s+='<line class="ax" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text class="tx" x="'+(L-6)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+v+'</text>'});
+  CPI_Y.forEach(function(y){s+='<text class="tx" x="'+X(y)+'" y="'+(H-8)+'" text-anchor="middle">'+y+'</text>'});
+  var sel=CPI_Y[state.yr];
+  s+='<line class="yearline" x1="'+X(sel)+'" x2="'+X(sel)+'" y1="'+T+'" y2="'+(H-B)+'"/>';
+  CPI.slice().reverse().forEach(function(c){
+    if(!state.cs[c[0]])return;
+    var pts=c[1].map(function(v,i){return X(CPI_Y[i])+","+Y(v)}).join(" ");
+    s+='<polyline class="ln'+(c[0]==="Colombia"?" co":"")+'" points="'+pts+'" style="stroke:'+c[2]+'"/>';
+    var v=c[1][state.yr];s+='<circle cx="'+X(sel)+'" cy="'+Y(v)+'" r="'+(c[0]==="Colombia"?6:4)+'" style="fill:'+c[2]+'"/>';
+  });
+  s+='</svg>';
+  $("#chart").innerHTML=s;
+}
+function renderYearInfo(){
+  var i=state.yr,sel=CPI_Y[i];
+  $("#yrOut").textContent=sel;
+  var arr=CPI.map(function(c){return {n:c[0],v:c[1][i],col:c[2]}}).sort(function(a,b){return b.v-a.v});
+  var rank=arr.map(function(x){return x.n}).indexOf("Colombia")+1;
+  $("#insight").textContent="En "+sel+", Colombia obtuvo "+arr[rank-1].v+" de 100 y quedó en el puesto "+rank+" de "+arr.length+" entre los países de esta comparación.";
+  $("#bars").innerHTML=arr.map(function(x){return '<div class="row"><span>'+x.n+'</span><div class="track"><div class="fill'+(x.n==="Colombia"?" co":"")+'" style="width:'+x.v+'%"></div></div><b>'+x.v+'</b></div>'}).join("");
+}
+function renderLegend(){
+  $("#cleg").innerHTML=CPI.map(function(c){return '<button type="button" class="chip" data-n="'+c[0]+'" aria-pressed="'+!!state.cs[c[0]]+'"><span class="dotc" style="background:'+c[2]+'"></span>'+c[0]+'</button>'}).join("");
+}
+function initMundo(){
+  renderLegend();renderChart();renderYearInfo();
+  $("#cleg").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;var n=b.getAttribute("data-n");if(n==="Colombia")return;state.cs[n]=!state.cs[n];renderLegend();renderChart()});
+  $("#yr").addEventListener("input",function(e){state.yr=+e.target.value;renderChart();renderYearInfo()});
+}
+
+/* ---------- DETECTIVE ---------- */
+var G={i:0,score:0,picked:null,done:false};
+function renderGame(){
+  var el=$("#game");
+  if(G.done){
+    var lvl=G.score<=2?0:G.score<=4?1:G.score<=6?2:3;
+    var txt="Saqué "+G.score+" de "+GAME.length+" en Detective anticorrupción. Nivel: "+LEVELS[lvl]+".";
+    el.innerHTML='<div class="kicker">Resultado</div><div class="big" style="margin-top:6px">'+G.score+' de '+GAME.length+'</div><p style="margin-top:6px;font-size:1.1rem">Nivel: <strong>'+LEVELS[lvl]+'</strong></p><div class="resbox" id="resTxt">'+txt+'</div><div class="stepnav"><button type="button" class="btn" id="copyRes">Copiar resultado</button><button type="button" class="btn ghost" id="again">Jugar de nuevo</button></div><p class="note" id="copyMsg" style="margin-top:8px"></p>';
+    return;
+  }
+  var g=GAME[G.i];
+  var h='<div class="prog"><i style="width:'+(G.i/GAME.length*100)+'%"></i></div><div class="kicker">Caso '+(G.i+1)+' de '+GAME.length+' · Puntaje '+G.score+'</div><div class="exp" style="white-space:pre-wrap">'+g.ctx+'</div><h3 style="margin-top:16px;font-size:1.3rem">'+g.q+'</h3><div class="opts">';
+  g.o.forEach(function(o,i){
+    var cls="opt";if(G.picked!==null){if(i===g.ok)cls+=" ok";else if(i===G.picked)cls+=" bad"}
+    h+='<button type="button" class="'+cls+'" data-i="'+i+'"'+(G.picked!==null?" disabled":"")+'>'+String.fromCharCode(65+i)+". "+o+'</button>';
+  });
+  h+='</div>';
+  if(G.picked!==null){h+='<div class="why"><strong>'+(G.picked===g.ok?"Correcto. ":"No exactamente. ")+'</strong>'+g.why+'</div><div class="stepnav"><button type="button" class="btn" id="nextQ">'+(G.i===GAME.length-1?"Ver resultado":"Siguiente caso")+'</button></div>'}
+  el.innerHTML=h;
+}
+function initGame(){
+  $("#game").addEventListener("click",function(e){
+    var o=e.target.closest(".opt");
+    if(o&&G.picked===null){G.picked=+o.getAttribute("data-i");if(G.picked===GAME[G.i].ok)G.score++;renderGame();return}
+    if(e.target.id==="nextQ"){if(G.i===GAME.length-1){G.done=true}else{G.i++;G.picked=null}renderGame();return}
+    if(e.target.id==="again"){G={i:0,score:0,picked:null,done:false};renderGame();return}
+    if(e.target.id==="copyRes"){
+      var t=$("#resTxt").textContent,msg=$("#copyMsg");
+      var fallback=function(){var r=document.createRange();r.selectNodeContents($("#resTxt"));var s=window.getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="No se pudo copiar automáticamente. El texto quedó seleccionado: cópialo con tu teclado."};
+      try{navigator.clipboard.writeText(t).then(function(){msg.textContent="Resultado copiado."},fallback)}catch(err){fallback()}
+    }
+  });
+  renderGame();
+}
+
+/* ---------- GLOSARIO ---------- */
+function renderGlos(){
+  var cats=["Todos","Delito","Concepto","Institución","Ley"];
+  $("#gfilters").innerHTML=cats.map(function(c){return '<button type="button" class="chip" data-c="'+c+'" aria-pressed="'+(state.gf===c)+'">'+(c==="Todos"?"Todos":c+"s")+'</button>'}).join("").replace("Institucións","Instituciones").replace("Leys","Leyes");
+  var q=norm($("#gq").value.trim());
+  var list=GLOS.filter(function(g){return (state.gf==="Todos"||g.c===state.gf)&&(!q||norm(g.t+" "+g.d).indexOf(q)>=0)});
+  $("#gl").innerHTML=list.map(function(g){return '<details><summary><span>'+g.t+'</span><span class="tag">'+g.c+'</span></summary><div>'+g.d+'</div></details>'}).join("")||'<p>Sin resultados.</p>';
+}
+function initGlos(){
+  $("#gfilters").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;state.gf=b.getAttribute("data-c");renderGlos()});
+  $("#gq").addEventListener("input",renderGlos);
+  renderGlos();
+}
+
+/* ---------- QUÉ HACER ---------- */
+function renderCheck(){
+  var saved={};try{saved=JSON.parse(store.get("mc-check")||"{}")||{}}catch(e){saved={}}
+  var n=0;
+  $("#check").innerHTML=CHECK.map(function(t,i){var on=!!saved[i];if(on)n++;return '<label for="chk'+i+'"><input type="checkbox" id="chk'+i+'" data-i="'+i+'"'+(on?" checked":"")+'><span>'+t+'</span></label>'}).join("");
+  updCheck(n);
+}
+function updCheck(n){$("#chkTxt").textContent=n+" de "+CHECK.length+" pasos completados";$("#chkBar").style.width=(n/CHECK.length*100)+"%"}
+function initQue(){
+  $("#links").innerHTML=LINKS.map(function(l){return '<a href="'+l[1]+'" target="_blank" rel="noopener noreferrer">'+l[0]+' ↗</a>'}).join("");
+  renderCheck();
+  $("#check").addEventListener("change",function(e){
+    var saved={},n=0;
+    $$("#check input").forEach(function(c){if(c.checked){saved[c.getAttribute("data-i")]=1;n++}});
+    store.set("mc-check",JSON.stringify(saved));updCheck(n);
+  });
+}
+
+/* ---------- BÚSQUEDA ---------- */
+function buildIndex(){
+  var idx=[];
+  CASES.forEach(function(c){idx.push({k:"Caso",t:c.titulo+" ("+c.year+")",x:[c.que,c.quienes,c.fin].join(" "),go:function(){openCase(c.id)}})});
+  MECS.forEach(function(m,i){idx.push({k:"Mecanismo",t:m.n,x:m.def+" "+m.pasos.join(" "),go:function(){state.mec=i;state.step=0;renderMecs();go("mecanismos")}})});
+  GLOS.forEach(function(g){idx.push({k:g.c,t:g.t,x:g.d,go:function(){state.gf="Todos";$("#gq").value=g.t;renderGlos();go("glosario")}})});
+  DEPTS.forEach(function(d){idx.push({k:"Territorio",t:d.n,x:d.cap+" "+d.reg,go:function(){state.dept=d.id;state.mapType="Todos";$("#mapType").value="Todos";renderMap();go("mapa")}})});
+  return idx;
+}
+var INDEX=null;
+function renderSearch(q){
+  if(!INDEX)INDEX=buildIndex();
+  var nq=norm(q);
+  var hits=INDEX.filter(function(h){return norm(h.t+" "+h.x).indexOf(nq)>=0}).sort(function(a,b){return (norm(b.t).indexOf(nq)>=0)-(norm(a.t).indexOf(nq)>=0)}).slice(0,24);
+  $("#sTitle").textContent=hits.length+(hits.length===1?" resultado":" resultados")+" para “"+q+"”";
+  var box=$("#sres");box.innerHTML="";
+  hits.forEach(function(h){
+    var b=document.createElement("button");b.type="button";b.className="hit";
+    var k=document.createElement("span");k.className="tag";k.textContent=h.k;
+    var t=document.createElement("strong");t.textContent=" "+h.t;
+    var p=document.createElement("p");p.textContent=h.x.length>140?h.x.slice(0,140)+"…":h.x;
+    b.appendChild(k);b.appendChild(t);b.appendChild(p);
+    b.addEventListener("click",function(){$("#q").value="";h.go()});
+    box.appendChild(b);
+  });
+  if(!hits.length){var p=document.createElement("p");p.textContent="No encontré coincidencias. Prueba con otra palabra, por ejemplo “contrato”, “salud” o el nombre de un departamento.";box.appendChild(p)}
+}
+
+/* ---------- TEMA ---------- */
+function initTheme(){
+  var saved=store.get("mc-theme");if(saved==="dark"||saved==="light")document.documentElement.setAttribute("data-theme",saved);
+  $("#theme").addEventListener("click",function(){
+    var cur=document.documentElement.getAttribute("data-theme");
+    if(!cur)cur=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+    var nx=cur==="dark"?"light":"dark";
+    document.documentElement.setAttribute("data-theme",nx);store.set("mc-theme",nx);
+  });
+}
+
+/* ---------- ARRANQUE ---------- */
+initHome();initMap();initCases();initMecs();initCalc();initMundo();initGame();initGlos();initQue();initTheme();
+$("#q").addEventListener("input",show);
+show();
+})();
+</script>
+
+</body>
+</html>
